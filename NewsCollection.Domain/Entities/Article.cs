@@ -7,6 +7,7 @@ public class Article
     public int Id { get; set; }
     public required string Headline { get; set; }
     public required string Summary { get; set; }
+    public required string Content { get; set; }
     public required string Url { get; set; }
     public required DateOnly PublicationDate { get; set; }
     public int CategoryId { get; set; }

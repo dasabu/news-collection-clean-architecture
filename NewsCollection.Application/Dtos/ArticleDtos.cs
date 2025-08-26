@@ -14,6 +14,7 @@ public record CreateArticleDto
 (
     string Headline,
     string Summary,
+    string Content,
     string Url,
     DateOnly PublicationDate,
     int CategoryId

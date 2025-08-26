@@ -30,6 +30,7 @@ public class ArticleService(IArticleRepository repository, IHttpContextAccessor 
         {
             Headline = request.Headline,
             Summary = request.Summary,
+            Content = request.Content,
             Url = request.Url,
             PublicationDate = request.PublicationDate,
             CategoryId = request.CategoryId
