@@ -8,7 +8,12 @@ public record class CollectionDto(
     DateOnly UpdatedAt
 );
 
-public record CreateCollectionDto(
+public record class CreateCollectionDto(
+    string Name,
+    string? Description
+);
+
+public record UpdateCollectionDto(
     string Name,
     string? Description
 );
