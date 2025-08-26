@@ -45,4 +45,25 @@ public class ArticleRepository(NewsCollectionContext context) : IArticleReposito
             await context.SaveChangesAsync();
         }
     }
+
+    public async Task<List<Article>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder)
+    {
+        var query = context.Articles
+            .Include(a => a.Category)
+            .AsQueryable();
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(a => a.CategoryId == categoryId.Value);
+        }
+
+        query = sortOrder == "asc"
+            ? query.OrderBy(a => a.PublicationDate)
+            : query.OrderByDescending(a => a.PublicationDate);
+
+        return await query
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync();
+    }
 }

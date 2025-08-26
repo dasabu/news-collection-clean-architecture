@@ -9,7 +9,7 @@ namespace NewsCollection.Application.Services;
 
 public class ArticleService(IArticleRepository repository, IHttpContextAccessor httpContext) : IArticleService
 {
-    private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+    private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? throw new InvalidOperationException("User ID not found in token."));
 
     public async Task<List<ArticleDto>> GetAllArticlesAsync() =>
@@ -68,5 +68,21 @@ public class ArticleService(IArticleRepository repository, IHttpContextAccessor 
 
         await repository.DeleteArticleAsync(id);
         return true;
+    }
+    
+    public async Task<List<ArticleDto>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder)
+    {
+        if (page < 1 || limit < 1 || limit > 100)
+            return [];
+
+        if (categoryId.HasValue && categoryId <= 0)
+            return [];
+
+        if (sortOrder != "asc" && sortOrder != "desc")
+            return [];
+
+        return (await repository.GetArticlesByCategoryAsync(categoryId, page, limit, sortOrder))
+            .Select(a => a.ToDto())
+            .ToList();
     }
 }

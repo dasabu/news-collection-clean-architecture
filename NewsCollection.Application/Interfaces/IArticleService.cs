@@ -10,4 +10,5 @@ public interface IArticleService
     Task<ArticleDto?> CreateArticleAsync(CreateArticleDto request);
     Task<ArticleDto?> UpdateArticleAsync(int id, UpdateArticleDto request);
     Task<bool> DeleteArticleAsync(int id);
+    Task<List<ArticleDto>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder); // Get articles pagination
 }
