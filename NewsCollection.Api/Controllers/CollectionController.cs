@@ -1,54 +1,48 @@
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NewsCollection.Application.Dtos;
 using NewsCollection.Application.Interfaces;
 
 namespace NewsCollection.Api.Controllers;
 
+[Authorize]
 [Route("api/collections")]
 [ApiController]
 public class CollectionController(ICollectionService service) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<CollectionDto>>> GetCollections() =>
-        Ok(await service.GetCollectionsAsync());
+        Ok(await service.GetAllCollectionsAsync());
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<CollectionDto>> GetCollection(int id)
+    {
+        var collection = await service.GetCollectionByIdAsync(id);
+        return collection == null ? NotFound("Collection not found") : Ok(collection);
+    }
 
     [HttpPost]
     public async Task<ActionResult<CollectionDto>> CreateCollection(CreateCollectionDto request)
     {
         var collection = await service.CreateCollectionAsync(request);
-        return CreatedAtAction(nameof(GetCollections), new { id = collection?.Id }, collection);
+        return collection == null
+            ? BadRequest("Collection name already exists")
+            : CreatedAtAction(nameof(GetCollection), new { id = collection.Id }, collection);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<CollectionDto>> UpdateCollection(int id, CreateCollectionDto request)
+    public async Task<ActionResult<CollectionDto>> UpdateCollection(int id, UpdateCollectionDto request)
     {
         var collection = await service.UpdateCollectionAsync(id, request);
-        return collection == null ? NotFound() : Ok(collection);
+        return collection == null
+            ? BadRequest("Collection not found or name already exists")
+            : Ok(collection);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCollection(int id)
     {
         var success = await service.DeleteCollectionAsync(id);
-        return success ? NoContent() : NotFound();
+        return success ? NoContent() : BadRequest("Collection not found or contains articles");
     }
-
-    [HttpPost("{collectionId}/articles")]
-    public async Task<IActionResult> AddArticleToCollection(int collectionId, AddArticleToCollectionDto request)
-    {
-        var success = await service.AddArticleToCollectionAsync(collectionId, request.ArticleId);
-        return success ? CreatedAtAction(nameof(GetCollections), new { id = collectionId }, null) : BadRequest("Article already exists or collection not found.");
-    }
-
-    [HttpDelete("{collectionId}/articles/{articleId}")]
-    public async Task<IActionResult> RemoveArticleFromCollection(int collectionId, int articleId)
-    {
-        var success = await service.RemoveArticleFromCollectionAsync(collectionId, articleId);
-        return success ? NoContent() : NotFound();
-    }
-
-    [HttpGet("articles/{articleId}")]
-    public async Task<ActionResult<List<CollectionDto>>> GetCollectionsContainingArticle(int articleId) =>
-        Ok(await service.GetCollectionsContainingArticleAsync(articleId));
 }
