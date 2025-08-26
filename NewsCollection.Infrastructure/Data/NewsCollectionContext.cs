@@ -45,5 +45,8 @@ public class NewsCollectionContext(DbContextOptions<NewsCollectionContext> optio
         // global query filter for soft-delete
         modelBuilder.Entity<Collection>()
             .HasQueryFilter(c => !c.IsDeleted);
+
+        modelBuilder.Entity<CollectionArticle>()
+            .HasQueryFilter(ca => !ca.IsDeleted);
     }
 }

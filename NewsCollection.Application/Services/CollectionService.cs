@@ -9,7 +9,8 @@ namespace NewsCollection.Application.Services;
 
 public class CollectionService(ICollectionRepository repository, IHttpContextAccessor httpContext) : ICollectionService
 {
-    private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+    //! Collection only services
+    private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? throw new InvalidOperationException("User ID not found in token."));
 
     public async Task<List<CollectionDto>> GetAllCollectionsAsync() =>
@@ -66,5 +67,41 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
 
         await repository.DeleteCollectionAsync(id);
         return true;
+    }
+
+    //! Article-Collection Services
+    public async Task<bool> AddArticleToCollectionAsync(int collectionId, int articleId)
+    {
+        var collection = await repository.GetCollectionByIdAsync(collectionId);
+        if (collection == null || collection.UserId != GetUserId())
+            return false;
+
+        if (await repository.ArticleExistsInCollectionAsync(collectionId, articleId))
+            return false; // Prevent duplicate
+
+        await repository.AddArticleToCollectionAsync(collectionId, articleId);
+        return true;
+    }
+
+    public async Task<bool> SoftDeleteArticleFromCollectionAsync(int collectionId, int articleId)
+    {
+        var collection = await repository.GetCollectionByIdAsync(collectionId);
+        if (collection == null || collection.UserId != GetUserId())
+            return false;
+
+        await repository.SoftDeleteArticleFromCollectionAsync(collectionId, articleId);
+        return true;
+    }
+
+    public async Task<List<CollectionDto>> GetCollectionsContainingArticleAsync(int articleId) =>
+        (await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId())).Select(c => c.ToDto()).ToList();
+    
+    public async Task<List<ArticleDto>> GetArticlesInCollectionAsync(int collectionId)
+    {
+        var collection = await repository.GetCollectionByIdAsync(collectionId);
+        if (collection == null || collection.UserId != GetUserId())
+            return [];
+
+        return (await repository.GetArticlesInCollectionAsync(collectionId)).Select(a => a.ToDto()).ToList();
     }
 }

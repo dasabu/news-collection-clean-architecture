@@ -7,6 +7,7 @@ namespace NewsCollection.Infrastructure.Repositories;
 
 public class CollectionRepository(NewsCollectionContext context) : ICollectionRepository
 {
+    //! Collection only
     public async Task<List<Collection>> GetCollectionsByUserIdAsync(int userId)
     {
         var collections = await context.Collections
@@ -15,7 +16,7 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
             .ToListAsync();
         return collections;
     }
-        
+
 
     public async Task<Collection?> GetCollectionByIdAsync(int id) =>
         await context.Collections
@@ -52,4 +53,41 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
             await context.SaveChangesAsync();
         }
     }
+
+    //! Article-Collection
+    public async Task<bool> ArticleExistsInCollectionAsync(int collectionId, int articleId) =>
+        await context.CollectionArticles
+            .AnyAsync(ca => ca.CollectionId == collectionId && ca.ArticleId == articleId && !ca.IsDeleted);
+
+    public async Task AddArticleToCollectionAsync(int collectionId, int articleId)
+    {
+        context.CollectionArticles.Add(new CollectionArticle { CollectionId = collectionId, ArticleId = articleId, IsDeleted = false });
+        await context.SaveChangesAsync();
+    }
+
+    public async Task SoftDeleteArticleFromCollectionAsync(int collectionId, int articleId)
+    {
+        var entry = await context.CollectionArticles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ca => ca.CollectionId == collectionId && ca.ArticleId == articleId);
+        if (entry != null)
+        {
+            entry.IsDeleted = true;
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<List<Collection>> GetCollectionsContainingArticleAsync(int articleId, int userId) =>
+        await context.Collections
+            .Where(c => c.UserId == userId && c.Articles.Any(a => a.Id == articleId))
+            .Include(c => c.Articles)
+            .ToListAsync();
+    
+    public async Task<List<Article>> GetArticlesInCollectionAsync(int collectionId) =>
+        await context.CollectionArticles
+            .Where(ca => ca.CollectionId == collectionId && !ca.IsDeleted)
+            .Include(ca => ca.Article)
+            .ThenInclude(a => a!.Category)
+            .Select(ca => ca.Article!)
+            .ToListAsync();
 }

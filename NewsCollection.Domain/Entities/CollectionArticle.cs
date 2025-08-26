@@ -1,5 +1,3 @@
-using System;
-
 namespace NewsCollection.Domain.Entities;
 
 public class CollectionArticle
@@ -8,4 +6,5 @@ public class CollectionArticle
     public Collection? Collection { get; set; }
     public int ArticleId { get; set; }
     public Article? Article { get; set; }
+    public bool IsDeleted { get; set; } = false; // for soft-delete
 }
