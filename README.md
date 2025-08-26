@@ -1,6 +1,7 @@
 # NewsCollection Application
 
 ### Source code Organization (Clean Architecture)
+```
 .
 ├── NewsCollection.Api/             (Presentation)
 │   └── Controllers/                 (API controller classes: ArticleController)
@@ -15,6 +16,7 @@
 ├── NewsCollection.Domain/          (Domain Layer: Business Entity, Core logic and Independ with other layers)
 │   └── Entities/                    (entity classes: User, Article, Collection... define data structures and relationship of entities)
 └── NewsCollection.sln
+```
 
 ### DBML Schema
 
