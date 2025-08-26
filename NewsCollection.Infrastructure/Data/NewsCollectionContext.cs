@@ -41,5 +41,9 @@ public class NewsCollectionContext(DbContextOptions<NewsCollectionContext> optio
                 j => j.HasOne(ca => ca.Collection).WithMany().HasForeignKey(ca => ca.CollectionId),
                 j => j.ToTable("CollectionArticles")
             );
+
+        // global query filter for soft-delete
+        modelBuilder.Entity<Collection>()
+            .HasQueryFilter(c => !c.IsDeleted);
     }
 }

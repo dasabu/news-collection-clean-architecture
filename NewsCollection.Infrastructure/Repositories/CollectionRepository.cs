@@ -43,10 +43,12 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
 
     public async Task DeleteCollectionAsync(int id)
     {
-        var collection = await context.Collections.FindAsync(id);
+        var collection = await context.Collections
+            .IgnoreQueryFilters() // ignore global query filter, to find soft-deleted collection
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (collection != null)
         {
-            context.Collections.Remove(collection);
+            collection.IsDeleted = true; // mark as soft-deleted
             await context.SaveChangesAsync();
         }
     }

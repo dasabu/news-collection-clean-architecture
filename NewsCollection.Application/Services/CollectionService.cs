@@ -32,7 +32,8 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
             Description = request.Description,
             UserId = GetUserId(),
             CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
-            UpdatedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+            UpdatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+            IsDeleted = false // just ensure that new collection is not marked as deleted
         };
         await repository.AddCollectionAsync(collection);
         return collection.ToDto();

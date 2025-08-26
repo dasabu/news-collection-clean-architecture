@@ -17,6 +17,9 @@ public class Collection
     public DateOnly CreatedAt { get; set; }
     public DateOnly UpdatedAt { get; set; }
 
+    // soft-delete
+    public bool IsDeleted { get; set; } = false;
+
     // many-to-many
     public List<Article> Articles { get; set; } = new();
 }
