@@ -7,9 +7,9 @@ public class Article
     public int Id { get; set; }
     public required string Headline { get; set; }
     public required string Summary { get; set; }
-    public required string Content { get; set; }
     public required string Url { get; set; }
     public required DateOnly PublicationDate { get; set; }
+    public DateTime FetchedAt { get; set; } // sync time from NewsAPI
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
 

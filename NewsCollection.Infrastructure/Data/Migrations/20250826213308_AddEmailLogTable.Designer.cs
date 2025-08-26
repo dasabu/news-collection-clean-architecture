@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NewsCollection.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NewsCollection.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(NewsCollectionContext))]
-    partial class NewsCollectionContextModelSnapshot : ModelSnapshot
+    [Migration("20250826213308_AddEmailLogTable")]
+    partial class AddEmailLogTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,9 +37,7 @@ namespace NewsCollection.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("FetchedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Headline")
                         .IsRequired()
@@ -85,22 +86,22 @@ namespace NewsCollection.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "Business"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Health"
-                        },
-                        new
-                        {
-                            Id = 4,
                             Name = "Sports"
                         },
                         new
                         {
+                            Id = 3,
+                            Name = "Politics"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Health"
+                        },
+                        new
+                        {
                             Id = 5,
-                            Name = "Science"
+                            Name = "Entertainment"
                         });
                 });
 
@@ -147,9 +148,7 @@ namespace NewsCollection.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -159,37 +158,6 @@ namespace NewsCollection.Infrastructure.Data.Migrations
                     b.HasIndex("ArticleId");
 
                     b.ToTable("CollectionArticles", (string)null);
-                });
-
-            modelBuilder.Entity("NewsCollection.Domain.Entities.EmailLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("Success")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("EmailLogs");
                 });
 
             modelBuilder.Entity("NewsCollection.Domain.Entities.User", b =>
@@ -212,44 +180,15 @@ namespace NewsCollection.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("SubscriptionFrequency")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("daily");
-
                     b.HasKey("Id");
 
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("NewsCollection.Domain.Entities.UserSubscription", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<DateTime?>("LastNotified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("UserId", "CategoryId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("UserSubscriptions");
-                });
-
             modelBuilder.Entity("NewsCollection.Domain.Entities.Article", b =>
                 {
                     b.HasOne("NewsCollection.Domain.Entities.Category", "Category")
-                        .WithMany("Articles")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -260,7 +199,7 @@ namespace NewsCollection.Infrastructure.Data.Migrations
             modelBuilder.Entity("NewsCollection.Domain.Entities.Collection", b =>
                 {
                     b.HasOne("NewsCollection.Domain.Entities.User", "User")
-                        .WithMany("Collections")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -285,50 +224,6 @@ namespace NewsCollection.Infrastructure.Data.Migrations
                     b.Navigation("Article");
 
                     b.Navigation("Collection");
-                });
-
-            modelBuilder.Entity("NewsCollection.Domain.Entities.EmailLog", b =>
-                {
-                    b.HasOne("NewsCollection.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("NewsCollection.Domain.Entities.UserSubscription", b =>
-                {
-                    b.HasOne("NewsCollection.Domain.Entities.Category", "Category")
-                        .WithMany("Subscriptions")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NewsCollection.Domain.Entities.User", "User")
-                        .WithMany("Subscriptions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("NewsCollection.Domain.Entities.Category", b =>
-                {
-                    b.Navigation("Articles");
-
-                    b.Navigation("Subscriptions");
-                });
-
-            modelBuilder.Entity("NewsCollection.Domain.Entities.User", b =>
-                {
-                    b.Navigation("Collections");
-
-                    b.Navigation("Subscriptions");
                 });
 #pragma warning restore 612, 618
         }

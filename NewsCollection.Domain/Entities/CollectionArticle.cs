@@ -7,4 +7,5 @@ public class CollectionArticle
     public int ArticleId { get; set; }
     public Article? Article { get; set; }
     public bool IsDeleted { get; set; } = false; // for soft-delete
+    public DateTime CreatedAt { get; set; } // for tracking time added into DB
 }
