@@ -11,8 +11,15 @@ namespace NewsCollection.Api.Controllers;
 public class CollectionController(ICollectionService service) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<CollectionDto>>> GetCollections() =>
-        Ok(await service.GetAllCollectionsAsync());
+    // public async Task<ActionResult<List<CollectionDto>>> GetCollections() =>
+    //     Ok(await service.GetAllCollectionsAsync());
+    public async Task<ActionResult<List<CollectionDto>>> GetCollections(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 10
+    ) {
+        var collections = await service.GetAllCollectionsAsync(page, limit);
+        return collections.Any() || page == 1 ? Ok(collections) : BadRequest("Invalid page or limit");
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<CollectionDto>> GetCollection(int id)
@@ -61,14 +68,25 @@ public class CollectionController(ICollectionService service) : ControllerBase
     }
 
     [HttpGet("articles/{articleId}")]
-    public async Task<ActionResult<List<CollectionDto>>> GetCollectionsContainingArticle(int articleId) =>
-        Ok(await service.GetCollectionsContainingArticleAsync(articleId));
+    // public async Task<ActionResult<List<CollectionDto>>> GetCollectionsContainingArticle(int articleId) =>
+    //     Ok(await service.GetCollectionsContainingArticleAsync(articleId));
+    public async Task<ActionResult<List<CollectionDto>>> GetCollectionsContainingArticle(
+        int articleId,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 10
+    ) {
+        var collections = await service.GetCollectionsContainingArticleAsync(articleId, page, limit);
+        return collections.Any() || page == 1 ? Ok(collections) : BadRequest("Invalid page or limit");
+    }
     
     [HttpGet("{collectionId}/articles")]
-    public async Task<ActionResult<List<ArticleDto>>> GetArticlesInCollection(int collectionId)
-    {
-        var articles = await service.GetArticlesInCollectionAsync(collectionId);
-        return articles.Any() || (await service.GetCollectionByIdAsync(collectionId) != null)
+    public async Task<ActionResult<List<ArticleDto>>> GetArticlesInCollection(
+        int collectionId,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 10
+    ) {
+        var articles = await service.GetArticlesInCollectionAsync(collectionId, page, limit);
+        return articles.Any() || page == 1 || (await service.GetCollectionByIdAsync(collectionId) != null)
             ? Ok(articles)
             : NotFound("Collection not found");
     }

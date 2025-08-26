@@ -8,14 +8,18 @@ namespace NewsCollection.Infrastructure.Repositories;
 public class CollectionRepository(NewsCollectionContext context) : ICollectionRepository
 {
     //! Collection only
-    public async Task<List<Collection>> GetCollectionsByUserIdAsync(int userId)
-    {
-        var collections = await context.Collections
+    public async Task<List<Collection>> GetCollectionsByUserIdAsync(int userId, int page, int limit) =>
+        // await context.Collections
+        //     .Where(c => c.UserId == userId)
+        //     .Include(c => c.Articles)
+        //     .ToListAsync();
+        await context.Collections
             .Where(c => c.UserId == userId)
             .Include(c => c.Articles)
+            .OrderByDescending(c => c.UpdatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
-        return collections;
-    }
 
 
     public async Task<Collection?> GetCollectionByIdAsync(int id) =>
@@ -77,17 +81,33 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
         }
     }
 
-    public async Task<List<Collection>> GetCollectionsContainingArticleAsync(int articleId, int userId) =>
+    public async Task<List<Collection>> GetCollectionsContainingArticleAsync(int articleId, int userId, int page, int limit) =>
+        // await context.Collections
+        //     .Where(c => c.UserId == userId && c.Articles.Any(a => a.Id == articleId))
+        //     .Include(c => c.Articles)
+        //     .ToListAsync();
         await context.Collections
             .Where(c => c.UserId == userId && c.Articles.Any(a => a.Id == articleId))
             .Include(c => c.Articles)
+            .OrderByDescending(c => c.UpdatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync();
-    
-    public async Task<List<Article>> GetArticlesInCollectionAsync(int collectionId) =>
+
+    public async Task<List<Article>> GetArticlesInCollectionAsync(int collectionId, int page, int limit) =>
+        // await context.CollectionArticles
+        //     .Where(ca => ca.CollectionId == collectionId && !ca.IsDeleted)
+        //     .Include(ca => ca.Article)
+        //     .ThenInclude(a => a!.Category)
+        //     .Select(ca => ca.Article!)
+        //     .ToListAsync();
         await context.CollectionArticles
             .Where(ca => ca.CollectionId == collectionId && !ca.IsDeleted)
             .Include(ca => ca.Article)
             .ThenInclude(a => a!.Category)
+            .OrderByDescending(ca => ca.Article!.PublicationDate)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .Select(ca => ca.Article!)
             .ToListAsync();
 }

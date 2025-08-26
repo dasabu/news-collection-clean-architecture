@@ -13,8 +13,17 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
     private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? throw new InvalidOperationException("User ID not found in token."));
 
-    public async Task<List<CollectionDto>> GetAllCollectionsAsync() =>
-        (await repository.GetCollectionsByUserIdAsync(GetUserId())).Select(c => c.ToDto()).ToList();
+    public async Task<List<CollectionDto>> GetAllCollectionsAsync(int page, int limit)
+    {
+        // return (await repository.GetCollectionsByUserIdAsync(GetUserId())).Select(c => c.ToDto()).ToList();
+        if (page < 1 || limit < 1 || limit > 100)
+            return [];
+
+        return (await repository.GetCollectionsByUserIdAsync(GetUserId(), page, limit))
+            .Select(c => c.ToDto())
+            .ToList();
+    }
+        
 
     public async Task<CollectionDto?> GetCollectionByIdAsync(int id)
     {
@@ -93,15 +102,34 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
         return true;
     }
 
-    public async Task<List<CollectionDto>> GetCollectionsContainingArticleAsync(int articleId) =>
-        (await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId())).Select(c => c.ToDto()).ToList();
-    
-    public async Task<List<ArticleDto>> GetArticlesInCollectionAsync(int collectionId)
+    public async Task<List<CollectionDto>> GetCollectionsContainingArticleAsync(int articleId, int page, int limit)
     {
+        // return (await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId())).Select(c => c.ToDto()).ToList();
+        if (page < 1 || limit < 1 || limit > 100)
+            return [];
+
+        return (await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId(), page, limit))
+            .Select(c => c.ToDto())
+            .ToList();
+    }
+        
+
+    public async Task<List<ArticleDto>> GetArticlesInCollectionAsync(int collectionId, int page, int limit)
+    {
+        // var collection = await repository.GetCollectionByIdAsync(collectionId);
+        // if (collection == null || collection.UserId != GetUserId())
+        //     return [];
+
+        // return (await repository.GetArticlesInCollectionAsync(collectionId)).Select(a => a.ToDto()).ToList();
+        if (page < 1 || limit < 1 || limit > 100)
+            return [];
+
         var collection = await repository.GetCollectionByIdAsync(collectionId);
         if (collection == null || collection.UserId != GetUserId())
             return [];
 
-        return (await repository.GetArticlesInCollectionAsync(collectionId)).Select(a => a.ToDto()).ToList();
+        return (await repository.GetArticlesInCollectionAsync(collectionId, page, limit))
+            .Select(a => a.ToDto())
+            .ToList();
     }
 }
