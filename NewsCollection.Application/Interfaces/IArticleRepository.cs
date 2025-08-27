@@ -11,7 +11,7 @@ public interface IArticleRepository
     Task AddArticleAsync(Article article);
     Task UpdateArticleAsync(Article article);
     Task DeleteArticleAsync(int id);
-    Task<List<Article>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder);
+    Task<(List<Article> Items, int TotalCount)> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder); // Updated to return tuple with items and total count
 
     Task<Article?> GetByUrlAsync(string url);
 }

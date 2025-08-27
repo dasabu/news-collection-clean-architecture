@@ -69,23 +69,30 @@ public class ArticleService(IArticleRepository repository, IHttpContextAccessor 
         return true;
     }
 
-    public async Task<List<ArticleDto>> GetArticlesByCategoryAsync(
+    public async Task<PaginatedResult<ArticleDto>> GetArticlesByCategoryAsync(
         int? categoryId, int page, int limit, string sortOrder
     ) {
         if (page < 1 || limit < 1)
-            return [];
+            return new PaginatedResult<ArticleDto> { CurrentPage = page, PageSize = limit, TotalItems = 0, TotalPages = 0 };
 
         if (categoryId.HasValue && categoryId <= 0)
-            return [];
+            return new PaginatedResult<ArticleDto> { CurrentPage = page, PageSize = limit, TotalItems = 0, TotalPages = 0 };
 
         if (sortOrder != "asc" && sortOrder != "desc")
-            return [];
+            return new PaginatedResult<ArticleDto> { CurrentPage = page, PageSize = limit, TotalItems = 0, TotalPages = 0 };
 
-        return (await repository.GetArticlesByCategoryAsync(
+        var (articles, totalCount) = await repository.GetArticlesByCategoryAsync(
                 categoryId, page, limit, sortOrder
-            ))
-            .Select(a => a.ToDto())
-            .ToList();
+            );
+
+        return new PaginatedResult<ArticleDto>
+        {
+            Items = articles.Select(a => a.ToDto()).ToList(),
+            CurrentPage = page,
+            PageSize = limit,
+            TotalItems = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)limit)
+        };
     }
 
     public async Task AddOrUpdateArticleAsync(

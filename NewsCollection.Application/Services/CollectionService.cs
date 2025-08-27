@@ -9,19 +9,24 @@ namespace NewsCollection.Application.Services;
 
 public class CollectionService(ICollectionRepository repository, IHttpContextAccessor httpContext) : ICollectionService
 {
-    //! Collection only services
     private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? throw new InvalidOperationException("User ID not found in token."));
 
-    public async Task<List<CollectionDto>> GetAllCollectionsAsync(int page, int limit)
+    public async Task<PaginatedResult<CollectionDto>> GetAllCollectionsAsync(int page, int limit)
     {
-        // return (await repository.GetCollectionsByUserIdAsync(GetUserId())).Select(c => c.ToDto()).ToList();
         if (page < 1 || limit < 1 || limit > 100)
-            return [];
+            return new PaginatedResult<CollectionDto> { CurrentPage = page, PageSize = limit };
 
-        return (await repository.GetCollectionsByUserIdAsync(GetUserId(), page, limit))
-            .Select(c => c.ToDto())
-            .ToList();
+        var (items, totalCount) = await repository.GetCollectionsByUserIdAsync(GetUserId(), page, limit);
+
+        return new PaginatedResult<CollectionDto>
+        {
+            Items = items.Select(c => c.ToDto()).ToList(),
+            CurrentPage = page,
+            PageSize = limit,
+            TotalItems = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)limit)
+        };
     }
 
     public async Task<CollectionDto?> GetCollectionByIdAsync(int id)
@@ -33,7 +38,7 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
     public async Task<CollectionDto?> CreateCollectionAsync(CreateCollectionDto request)
     {
         if (await repository.CollectionExistsAsync(request.Name, GetUserId()))
-            return null; // Collection name already exists for this user
+            return null;
 
         var collection = new Collection
         {
@@ -42,7 +47,7 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
             UserId = GetUserId(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            IsDeleted = false // just ensure that new collection is not marked as deleted
+            IsDeleted = false
         };
         await repository.AddCollectionAsync(collection);
         return collection.ToDto();
@@ -52,10 +57,10 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
     {
         var collection = await repository.GetCollectionByIdAsync(id);
         if (collection == null || collection.UserId != GetUserId())
-            return null; // Collection not found or not owned by user
+            return null;
 
         if (await repository.CollectionExistsAsync(request.Name, GetUserId(), id))
-            return null; // Another collection with the same name exists
+            return null;
 
         collection.Name = request.Name;
         collection.Description = request.Description;
@@ -68,16 +73,15 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
     {
         var collection = await repository.GetCollectionByIdAsync(id);
         if (collection == null || collection.UserId != GetUserId())
-            return false; // Collection not found or not owned by user
+            return false;
 
         if (await repository.HasArticlesAsync(id))
-            return false; // Cannot delete collection with articles
+            return false;
 
         await repository.DeleteCollectionAsync(id);
         return true;
     }
 
-    //! Article-Collection Services
     public async Task<bool> AddArticleToCollectionAsync(int collectionId, int articleId)
     {
         var collection = await repository.GetCollectionByIdAsync(collectionId);
@@ -85,7 +89,7 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
             return false;
 
         if (await repository.ArticleExistsInCollectionAsync(collectionId, articleId))
-            return false; // Prevent duplicate
+            return false;
 
         await repository.AddArticleToCollectionAsync(collectionId, articleId);
         return true;
@@ -101,34 +105,41 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
         return true;
     }
 
-    public async Task<List<CollectionDto>> GetCollectionsContainingArticleAsync(int articleId, int page, int limit)
+    public async Task<PaginatedResult<CollectionDto>> GetCollectionsContainingArticleAsync(int articleId, int page, int limit)
     {
-        // return (await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId())).Select(c => c.ToDto()).ToList();
         if (page < 1 || limit < 1 || limit > 100)
-            return [];
+            return new PaginatedResult<CollectionDto> { CurrentPage = page, PageSize = limit };
 
-        return (await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId(), page, limit))
-            .Select(c => c.ToDto())
-            .ToList();
+        var (items, totalCount) = await repository.GetCollectionsContainingArticleAsync(articleId, GetUserId(), page, limit);
+
+        return new PaginatedResult<CollectionDto>
+        {
+            Items = items.Select(c => c.ToDto()).ToList(),
+            CurrentPage = page,
+            PageSize = limit,
+            TotalItems = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)limit)
+        };
     }
 
-
-    public async Task<List<ArticleDto>> GetArticlesInCollectionAsync(int collectionId, int page, int limit)
+    public async Task<PaginatedResult<ArticleDto>> GetArticlesInCollectionAsync(int collectionId, int page, int limit)
     {
-        // var collection = await repository.GetCollectionByIdAsync(collectionId);
-        // if (collection == null || collection.UserId != GetUserId())
-        //     return [];
-
-        // return (await repository.GetArticlesInCollectionAsync(collectionId)).Select(a => a.ToDto()).ToList();
         if (page < 1 || limit < 1 || limit > 100)
-            return [];
+            return new PaginatedResult<ArticleDto> { CurrentPage = page, PageSize = limit };
 
         var collection = await repository.GetCollectionByIdAsync(collectionId);
         if (collection == null || collection.UserId != GetUserId())
-            return [];
+            return new PaginatedResult<ArticleDto> { CurrentPage = page, PageSize = limit };
 
-        return (await repository.GetArticlesInCollectionAsync(collectionId, page, limit))
-            .Select(a => a.ToDto())
-            .ToList();
+        var (items, totalCount) = await repository.GetArticlesInCollectionAsync(collectionId, page, limit);
+
+        return new PaginatedResult<ArticleDto>
+        {
+            Items = items.Select(a => a.ToDto()).ToList(),
+            CurrentPage = page,
+            PageSize = limit,
+            TotalItems = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)limit)
+        };
     }
 }

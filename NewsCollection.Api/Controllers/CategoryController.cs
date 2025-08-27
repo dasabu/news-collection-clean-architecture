@@ -42,7 +42,7 @@ public class CategoryController(ICategoryService service) : ControllerBase
 
     [Authorize]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCategory(int id)
+    public async Task<ActionResult> DeleteCategory(int id)
     {
         var success = await service.DeleteCategoryAsync(id);
         return success ? NoContent() : BadRequest("Category not found or contains articles");

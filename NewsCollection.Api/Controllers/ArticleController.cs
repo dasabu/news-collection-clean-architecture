@@ -49,14 +49,14 @@ public class ArticleController(IArticleService service) : ControllerBase
     }
 
     [HttpGet("by-category")]
-    public async Task<ActionResult<List<ArticleDto>>> GetArticlesByCategory(
+    public async Task<ActionResult<PaginatedResult<ArticleDto>>> GetArticlesByCategory(
         [FromQuery] int? categoryId,
         [FromQuery] int page = 1,
         [FromQuery] int limit = 10,
         [FromQuery] string sortOrder = "desc"
     )
     {
-        var articles = await service.GetArticlesByCategoryAsync(categoryId, page, limit, sortOrder);
-        return articles.Any() || page == 1 ? Ok(articles) : BadRequest("Invalid page, limit, category ID, or sort order");
+        var paginated = await service.GetArticlesByCategoryAsync(categoryId, page, limit, sortOrder);
+        return paginated.TotalPages > 0 || page == 1 ? Ok(paginated) : BadRequest("Invalid page, limit, category ID, or sort order");
     }
 }

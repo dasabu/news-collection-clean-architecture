@@ -46,7 +46,7 @@ public class ArticleRepository(NewsCollectionContext context) : IArticleReposito
         }
     }
 
-    public async Task<List<Article>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder)
+    public async Task<(List<Article> Items, int TotalCount)> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder)
     {
         var query = context.Articles
             .Include(a => a.Category)
@@ -57,14 +57,18 @@ public class ArticleRepository(NewsCollectionContext context) : IArticleReposito
             query = query.Where(a => a.CategoryId == categoryId.Value);
         }
 
+        var totalCount = await query.CountAsync();
+
         query = sortOrder == "asc"
             ? query.OrderBy(a => a.PublicationDate)
             : query.OrderByDescending(a => a.PublicationDate);
 
-        return await query
+        var items = await query
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<Article?> GetByUrlAsync(string url) =>

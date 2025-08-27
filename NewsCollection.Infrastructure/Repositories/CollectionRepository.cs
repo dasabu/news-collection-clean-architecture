@@ -7,32 +7,34 @@ namespace NewsCollection.Infrastructure.Repositories;
 
 public class CollectionRepository(NewsCollectionContext context) : ICollectionRepository
 {
-    //! Collection only
-    public async Task<List<Collection>> GetCollectionsByUserIdAsync(int userId, int page, int limit) =>
-        // await context.Collections
-        //     .Where(c => c.UserId == userId)
-        //     .Include(c => c.Articles)
-        //     .ToListAsync();
-        await context.Collections
-            .Where(c => c.UserId == userId)
-            .Include(c => c.Articles)
+    public async Task<(List<Collection> Items, int TotalCount)> GetCollectionsByUserIdAsync(int userId, int page, int limit)
+    {
+        var query = context.Collections
+            .Where(c => c.UserId == userId && !c.IsDeleted)
+            .Include(c => c.Articles);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(c => c.UpdatedAt)
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync();
 
+        return (items, totalCount);
+    }
 
     public async Task<Collection?> GetCollectionByIdAsync(int id) =>
         await context.Collections
             .Include(c => c.Articles)
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
 
     public async Task<bool> CollectionExistsAsync(string name, int userId, int? excludeId = null) =>
         await context.Collections
-            .AnyAsync(c => c.Name.ToLower() == name.ToLower() && c.UserId == userId && (excludeId == null || c.Id != excludeId));
+            .AnyAsync(c => c.Name.ToLower() == name.ToLower() && c.UserId == userId && (excludeId == null || c.Id != excludeId) && !c.IsDeleted);
 
     public async Task<bool> HasArticlesAsync(int id) =>
-        await context.CollectionArticles.AnyAsync(ca => ca.CollectionId == id);
+        await context.CollectionArticles.AnyAsync(ca => ca.CollectionId == id && !ca.IsDeleted);
 
     public async Task AddCollectionAsync(Collection collection)
     {
@@ -49,16 +51,15 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
     public async Task DeleteCollectionAsync(int id)
     {
         var collection = await context.Collections
-            .IgnoreQueryFilters() // ignore global query filter, to find soft-deleted collection
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Id == id);
         if (collection != null)
         {
-            collection.IsDeleted = true; // mark as soft-deleted
+            collection.IsDeleted = true;
             await context.SaveChangesAsync();
         }
     }
 
-    //! Article-Collection
     public async Task<bool> ArticleExistsInCollectionAsync(int collectionId, int articleId) =>
         await context.CollectionArticles
             .AnyAsync(ca => ca.CollectionId == collectionId && ca.ArticleId == articleId && !ca.IsDeleted);
@@ -88,33 +89,39 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
         }
     }
 
-    public async Task<List<Collection>> GetCollectionsContainingArticleAsync(int articleId, int userId, int page, int limit) =>
-        // await context.Collections
-        //     .Where(c => c.UserId == userId && c.Articles.Any(a => a.Id == articleId))
-        //     .Include(c => c.Articles)
-        //     .ToListAsync();
-        await context.Collections
-            .Where(c => c.UserId == userId && c.Articles.Any(a => a.Id == articleId))
-            .Include(c => c.Articles)
+    public async Task<(List<Collection> Items, int TotalCount)> GetCollectionsContainingArticleAsync(int articleId, int userId, int page, int limit)
+    {
+        var query = context.Collections
+            .Where(c => c.UserId == userId && !c.IsDeleted && c.Articles.Any(a => a.Id == articleId))
+            .Include(c => c.Articles);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(c => c.UpdatedAt)
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync();
 
-    public async Task<List<Article>> GetArticlesInCollectionAsync(int collectionId, int page, int limit) =>
-        // await context.CollectionArticles
-        //     .Where(ca => ca.CollectionId == collectionId && !ca.IsDeleted)
-        //     .Include(ca => ca.Article)
-        //     .ThenInclude(a => a!.Category)
-        //     .Select(ca => ca.Article!)
-        //     .ToListAsync();
-        await context.CollectionArticles
+        return (items, totalCount);
+    }
+
+    public async Task<(List<Article> Items, int TotalCount)> GetArticlesInCollectionAsync(int collectionId, int page, int limit)
+    {
+        var query = context.CollectionArticles
             .Where(ca => ca.CollectionId == collectionId && !ca.IsDeleted)
             .Include(ca => ca.Article)
-            .ThenInclude(a => a!.Category)
+            .ThenInclude(a => a!.Category);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(ca => ca.Article!.PublicationDate)
             .Skip((page - 1) * limit)
             .Take(limit)
             .Select(ca => ca.Article!)
             .ToListAsync();
+
+        return (items, totalCount);
+    }
 }
