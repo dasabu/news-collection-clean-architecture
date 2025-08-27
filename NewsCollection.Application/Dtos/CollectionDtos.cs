@@ -5,7 +5,7 @@ public record class CollectionDto(
     string Name,
     string? Description,
     int ArticleCount,
-    DateOnly UpdatedAt
+    DateTime UpdatedAt
 );
 
 public record class CreateCollectionDto(

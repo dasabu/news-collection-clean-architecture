@@ -23,7 +23,6 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
             .Select(c => c.ToDto())
             .ToList();
     }
-        
 
     public async Task<CollectionDto?> GetCollectionByIdAsync(int id)
     {
@@ -41,8 +40,8 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
             Name = request.Name,
             Description = request.Description,
             UserId = GetUserId(),
-            CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
-            UpdatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             IsDeleted = false // just ensure that new collection is not marked as deleted
         };
         await repository.AddCollectionAsync(collection);
@@ -60,7 +59,7 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
 
         collection.Name = request.Name;
         collection.Description = request.Description;
-        collection.UpdatedAt = DateOnly.FromDateTime(DateTime.UtcNow);
+        collection.UpdatedAt = DateTime.UtcNow;
         await repository.UpdateCollectionAsync(collection);
         return collection.ToDto();
     }
@@ -112,7 +111,7 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
             .Select(c => c.ToDto())
             .ToList();
     }
-        
+
 
     public async Task<List<ArticleDto>> GetArticlesInCollectionAsync(int collectionId, int page, int limit)
     {

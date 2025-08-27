@@ -11,4 +11,7 @@ public interface IArticleService
     Task<ArticleDto?> UpdateArticleAsync(int id, UpdateArticleDto request);
     Task<bool> DeleteArticleAsync(int id);
     Task<List<ArticleDto>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder); // Get articles pagination
+    
+    // for NewsSyncJob to save article into DB
+    Task AddOrUpdateArticleAsync(string headline, string summary, string url, DateTime publicationDate, int categoryId);
 }

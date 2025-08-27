@@ -5,3 +5,7 @@ public record class UserDto(
     string Email,
     string Name
 );
+
+public record class UpdateUserFrequencyDto(
+    string Frequency = "daily"
+);

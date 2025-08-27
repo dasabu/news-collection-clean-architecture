@@ -26,7 +26,7 @@ public class ArticleRepository(NewsCollectionContext context) : IArticleReposito
 
     public async Task AddArticleAsync(Article article)
     {
-        context.Articles.Add(article);
+        await context.Articles.AddAsync(article);
         await context.SaveChangesAsync();
     }
 
@@ -66,4 +66,7 @@ public class ArticleRepository(NewsCollectionContext context) : IArticleReposito
             .Take(limit)
             .ToListAsync();
     }
+
+    public async Task<Article?> GetByUrlAsync(string url) =>
+        await context.Articles.FirstOrDefaultAsync(a => a.Url == url);
 }

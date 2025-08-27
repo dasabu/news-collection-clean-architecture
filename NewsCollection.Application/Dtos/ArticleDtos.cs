@@ -5,7 +5,7 @@ public record class ArticleDto(
     string Headline,
     string Summary,
     string Url,
-    DateOnly PublicationDate,
+    DateTime PublicationDate,
     int CategoryId,
     string CategoryName
 );
@@ -16,7 +16,7 @@ public record CreateArticleDto
     string Summary,
     string Content,
     string Url,
-    DateOnly PublicationDate,
+    DateTime PublicationDate,
     int CategoryId
 );
 
@@ -25,7 +25,7 @@ public record UpdateArticleDto
     string Headline,
     string Summary,
     string Url,
-    DateOnly PublicationDate,
+    DateTime PublicationDate,
     int CategoryId
 );
 

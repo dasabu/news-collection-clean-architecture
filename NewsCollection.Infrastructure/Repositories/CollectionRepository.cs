@@ -36,7 +36,7 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
 
     public async Task AddCollectionAsync(Collection collection)
     {
-        context.Collections.Add(collection);
+        await context.Collections.AddAsync(collection);
         await context.SaveChangesAsync();
     }
 
@@ -65,7 +65,14 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
 
     public async Task AddArticleToCollectionAsync(int collectionId, int articleId)
     {
-        context.CollectionArticles.Add(new CollectionArticle { CollectionId = collectionId, ArticleId = articleId, IsDeleted = false });
+        await context.CollectionArticles.AddAsync(
+            new CollectionArticle
+            {
+                CollectionId = collectionId,
+                ArticleId = articleId,
+                IsDeleted = false
+            }
+        );
         await context.SaveChangesAsync();
     }
 

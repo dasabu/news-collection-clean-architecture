@@ -68,10 +68,11 @@ public class ArticleService(IArticleRepository repository, IHttpContextAccessor 
         await repository.DeleteArticleAsync(id);
         return true;
     }
-    
-    public async Task<List<ArticleDto>> GetArticlesByCategoryAsync(int? categoryId, int page, int limit, string sortOrder)
-    {
-        if (page < 1 || limit < 1 || limit > 100)
+
+    public async Task<List<ArticleDto>> GetArticlesByCategoryAsync(
+        int? categoryId, int page, int limit, string sortOrder
+    ) {
+        if (page < 1 || limit < 1)
             return [];
 
         if (categoryId.HasValue && categoryId <= 0)
@@ -80,8 +81,42 @@ public class ArticleService(IArticleRepository repository, IHttpContextAccessor 
         if (sortOrder != "asc" && sortOrder != "desc")
             return [];
 
-        return (await repository.GetArticlesByCategoryAsync(categoryId, page, limit, sortOrder))
+        return (await repository.GetArticlesByCategoryAsync(
+                categoryId, page, limit, sortOrder
+            ))
             .Select(a => a.ToDto())
             .ToList();
     }
+
+    public async Task AddOrUpdateArticleAsync(
+        string headline,
+        string summary,
+        string url,
+        DateTime publicationDate,
+        int categoryId
+    )
+    {
+        var existing = await repository.GetByUrlAsync(url);
+        if (existing != null)
+        {
+            existing.Headline = headline;
+            existing.Summary = summary;
+            existing.PublicationDate = publicationDate;
+            existing.CategoryId = categoryId;
+            existing.FetchedAt = DateTime.UtcNow;
+            await repository.UpdateArticleAsync(existing);
+            return;
+        }
+
+        var article = new Article
+        {
+            Headline = headline,
+            Summary = summary,
+            Url = url,
+            PublicationDate = publicationDate,
+            CategoryId = categoryId,
+            FetchedAt = DateTime.UtcNow
+        };
+        await repository.AddArticleAsync(article);
+       }
 }
