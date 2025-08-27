@@ -12,11 +12,13 @@ using Scalar.AspNetCore;
 using Hangfire;
 using Hangfire.PostgreSql;
 using NewsCollection.Infrastructure.Jobs;
+using NewsCollection.Api.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var MyAllowSpecificOrigins = "AllowLocal3000";
 
+// config CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(MyAllowSpecificOrigins,
@@ -28,7 +30,10 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ResponseWrapperFilter>();
+});
 builder.Services.AddEndpointsApiExplorer();
 
 // DbContext
@@ -106,6 +111,7 @@ app.UseCors(MyAllowSpecificOrigins);
 // Add Hangfire dashboard
 app.UseHangfireDashboard("/hangfire");
 
+app.UseRouting();
 app.MapControllers();
 
 // Schedule Hangfire jobs
