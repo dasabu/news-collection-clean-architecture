@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using NewsCollection.Application.Interfaces;
+using System.Threading.Tasks;
+using System;
 
 namespace NewsCollection.Infrastructure.Jobs;
 
@@ -17,6 +19,13 @@ public class NewsSyncJob(
         {
             try
             {
+                if (i > 0)
+                {
+                    // delay between API calls to avoid rate limiting
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    logger.LogInformation("Waiting {WaitSeconds} seconds between API calls for category {Category}", 2, categories[i]);
+                }
+                
                 var articles = await newsApiProvider.GetTopHeadlinesAsync(categories[i]);
                 foreach (var article in articles)
                 {

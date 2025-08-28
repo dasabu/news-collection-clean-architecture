@@ -7,5 +7,6 @@ public record class UserDto(
 );
 
 public record class UpdateUserFrequencyDto(
-    string Frequency = "daily"
+    string Frequency = "daily",
+    int? CategoryId = null
 );

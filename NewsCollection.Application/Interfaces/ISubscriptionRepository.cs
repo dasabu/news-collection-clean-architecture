@@ -11,5 +11,7 @@ public interface ISubscriptionRepository
     Task<List<UserSubscription>> GetUserSubscriptionsAsync(int userId);
     Task<User?> GetUserAsync(int userId);
     Task UpdateUserAsync(User user);
+    Task UpdateSubscriptionAsync(UserSubscription subscription);
+    Task UpdateSubscriptionsAsync(List<UserSubscription> subscriptions);
     Task<bool> CategoryExistsAsync(int categoryId);
 }

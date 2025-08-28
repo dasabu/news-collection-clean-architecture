@@ -10,18 +10,27 @@ public class UserRepository(NewsCollectionContext context) : IUserRepository
     public async Task<List<User>> GetUsersWithSubscriptionsAsync(string subscriptionFrequency)
     {
         return await context.Users
-            .Where(u => u.SubscriptionFrequency == subscriptionFrequency)
-            .Include(u => u.Subscriptions)
+            .Include(u => u.Subscriptions.Where(s => s.Frequency == subscriptionFrequency))
             .ThenInclude(s => s.Category)
+            .Where(u => u.Subscriptions.Any(s => s.Frequency == subscriptionFrequency))
             .ToListAsync();
     }
 
     public async Task<List<User>> GetUsersWithActiveSubscriptionsAsync()
     {
         return await context.Users
-            .Include(u => u.Subscriptions)
+            .Include(u => u.Subscriptions.Where(s => s.IsActive))
             .ThenInclude(s => s.Category)
             .Where(u => u.Subscriptions.Any(s => s.IsActive))
+            .ToListAsync();
+    }
+
+    public async Task<List<User>> GetUsersWithActiveSubscriptionsByFrequencyAsync(string frequency)
+    {
+        return await context.Users
+            .Include(u => u.Subscriptions.Where(s => s.IsActive && s.Frequency == frequency))
+            .ThenInclude(s => s.Category)
+            .Where(u => u.Subscriptions.Any(s => s.IsActive && s.Frequency == frequency))
             .ToListAsync();
     }
 
@@ -33,11 +42,31 @@ public class UserRepository(NewsCollectionContext context) : IUserRepository
 
     public async Task<List<User>> GetUsersWithCollectionsAsync()
     {
-        return await context.Users
-            .Include(u => u.Collections)
-            .ThenInclude(c => c.Articles)
-            // .ThenInclude(ca => ca.Article)
+        // First get users with non-deleted collections
+        var users = await context.Users
+            .Include(u => u.Collections.Where(c => !c.IsDeleted))
             .Where(u => u.Collections.Any(c => !c.IsDeleted))
             .ToListAsync();
+            
+        // Then load the articles for each collection using the join table
+        foreach (var user in users)
+        {
+            foreach (var collection in user.Collections)
+            {
+                // Load the CollectionArticle join entities with their Article entities
+                var collectionArticles = await context.Set<CollectionArticle>()
+                    .Include(ca => ca.Article)
+                    .Where(ca => ca.CollectionId == collection.Id && !ca.IsDeleted)
+                    .ToListAsync();
+                    
+                // Add the articles to the collection
+                collection.Articles = collectionArticles
+                    .Where(ca => ca.Article != null)
+                    .Select(ca => ca.Article!)
+                    .ToList();
+            }
+        }
+        
+        return users;
     }
 }

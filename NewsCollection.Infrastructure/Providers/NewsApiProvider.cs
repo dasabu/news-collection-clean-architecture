@@ -16,13 +16,29 @@ public class NewsApiProvider(
     {
         logger.LogInformation("Fetching top headlines for category {Category}", category);
         var apiKey = configuration["NewsApi:ApiKey"];
-        var fetchedUrl = $"https://newsapi.org/v2/top-headlines?category={category}&apiKey={apiKey}";
-        var response = await httpClient.GetAsync(fetchedUrl);
-        logger.LogInformation("Fetching url: {fetchedUrl}", fetchedUrl);
+        
+        // Check if API key is configured
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            logger.LogError("NewsApi:ApiKey is not configured in appsettings.json");
+            return new List<(string, string, string, DateTime)>();
+        }
+        
+        var fetchedUrl = $"https://newsapi.org/v2/top-headlines?category={category}&apiKey={apiKey}";    
+        logger.LogInformation("Fetching url: {FetchedUrl}", fetchedUrl);    
+
+        // Create request with User-Agent header
+        var request = new HttpRequestMessage(HttpMethod.Get, fetchedUrl);
+        request.Headers.Add("User-Agent", "NewsCollection/1.0");
+        
+        var response = await httpClient.SendAsync(request);
+        logger.LogInformation("Response status: {StatusCode}", response.StatusCode);
 
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError("Failed to fetch articles for {Category}. Status: {StatusCode}", category, response.StatusCode);
+            var errorContent = await response.Content.ReadAsStringAsync();
+            logger.LogError("Failed to fetch articles for {Category}. Status: {StatusCode}, Error: {ErrorContent}", 
+                category, response.StatusCode, errorContent);
             return new List<(string, string, string, DateTime)>();
         }
 

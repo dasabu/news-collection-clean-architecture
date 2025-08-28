@@ -9,7 +9,10 @@ using NewsCollection.Domain.Entities;
 
 namespace NewsCollection.Application.Services;
 
-public class SubscriptionService(ISubscriptionRepository repository, IHttpContextAccessor httpContext) : ISubscriptionService
+public class SubscriptionService(
+    ISubscriptionRepository repository, IHttpContextAccessor httpContext,
+    ICategoryRepository categoryRepository
+) : ISubscriptionService
 {
 
     private int GetUserId() => int.Parse(httpContext.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
@@ -27,14 +30,16 @@ public class SubscriptionService(ISubscriptionRepository repository, IHttpContex
                 existing.CategoryId,
                 existing.Category.Name,
                 existing.IsActive,
-                existing.LastNotified
+                existing.LastNotified,
+                existing.Frequency
             );
 
         var subscription = new UserSubscription
         {
             UserId = userId,
             CategoryId = request.CategoryId,
-            IsActive = true
+            IsActive = true,
+            Frequency = request.Frequency ?? "daily" // Default to daily if not specified
         };
 
         await repository.AddSubscriptionAsync(subscription);
@@ -46,7 +51,8 @@ public class SubscriptionService(ISubscriptionRepository repository, IHttpContex
             subscription.CategoryId,
             categoryName,
             subscription.IsActive,
-            subscription.LastNotified
+            subscription.LastNotified,
+            subscription.Frequency
         );
     }
 
@@ -67,7 +73,8 @@ public class SubscriptionService(ISubscriptionRepository repository, IHttpContex
             s.CategoryId,
             s.Category.Name,
             s.IsActive,
-            s.LastNotified
+            s.LastNotified,
+            s.Frequency
         )).ToList();
     }
 
@@ -76,12 +83,61 @@ public class SubscriptionService(ISubscriptionRepository repository, IHttpContex
         if (request.Frequency != "daily" && request.Frequency != "weekly")
             return false;
 
-        var user = await repository.GetUserAsync(GetUserId());
-        if (user == null)
-            return false;
-
-        user.SubscriptionFrequency = request.Frequency;
-        await repository.UpdateUserAsync(user);
+        int userId = GetUserId();
+        
+        // If categoryId is provided, update just that subscription
+        if (request.CategoryId.HasValue)
+        {
+            var subscription = await repository.GetSubscriptionAsync(userId, request.CategoryId.Value);
+            if (subscription == null)
+                return false;
+                
+            subscription.Frequency = request.Frequency;
+            await repository.UpdateSubscriptionAsync(subscription);
+        }
+        // Otherwise update all active subscriptions
+        else
+        {
+            var subscriptions = await repository.GetUserSubscriptionsAsync(userId);
+            foreach (var subscription in subscriptions.Where(s => s.IsActive))
+            {
+                subscription.Frequency = request.Frequency;
+            }
+            await repository.UpdateSubscriptionsAsync(subscriptions);
+        }
+        
         return true;
     }
+
+    public async Task<List<SubscriptionDto>> BatchSubscribeAsync(List<SubscriptionRequestDto> requests)
+    {
+        int userId = GetUserId();
+        var results = new List<SubscriptionDto>();
+        
+        foreach (var request in requests)
+        {
+            var subscription = await repository.GetSubscriptionAsync(userId, request.CategoryId)
+                ?? new UserSubscription { UserId = userId, CategoryId = request.CategoryId };
+                
+            subscription.IsActive = request.IsActive;
+            subscription.Frequency = request.Frequency;
+            
+            if (await repository.GetSubscriptionAsync(userId, request.CategoryId) == null)
+                await repository.AddSubscriptionAsync(subscription);
+            else
+                await repository.UpdateSubscriptionAsync(subscription);
+                
+            var category = await categoryRepository.GetCategoryByIdAsync(request.CategoryId);
+            results.Add(new SubscriptionDto(
+                subscription.CategoryId,
+                category?.Name ?? string.Empty,
+                subscription.IsActive,
+                subscription.LastNotified,
+                subscription.Frequency
+            ));
+        }
+        
+        return results;
+    }
+
 }

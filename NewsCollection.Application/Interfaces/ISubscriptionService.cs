@@ -9,4 +9,5 @@ public interface ISubscriptionService
     Task<bool> UnsubscribeAsync(int categoryId);
     Task<List<SubscriptionDto>> GetUserSubscriptionsAsync();
     Task<bool> UpdateUserFrequencyAsync(UpdateUserFrequencyDto request);
+    Task<List<SubscriptionDto>> BatchSubscribeAsync(List<SubscriptionRequestDto> requests);
 }

@@ -54,7 +54,6 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -63,7 +62,6 @@ builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IEmailLogRepository, EmailLogRepository>();
 
 // Providers
 builder.Services.AddScoped<ITokenProvider, TokenProvider>();
@@ -112,8 +110,9 @@ app.UseHangfireDashboard("/hangfire");
 
 app.UseRouting();
 
-app.UseAuthentication(); // Add this to enable JWT authentication
-app.UseAuthorization(); // Add this to enable authorization for [Authorize] attributes
+// Enable JWT authentication and authorization for [Authorize] attributes
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
@@ -124,19 +123,7 @@ using (var scope = app.Services.CreateScope())
     recurringJobManager.AddOrUpdate<NewsSyncJob>(
         "news-sync",
         job => job.ExecuteAsync(),
-        "*/2 * * * * *"); // Every 5 mins (for testing)
-    recurringJobManager.AddOrUpdate<DigestEmailJob>(
-        "digest-email",
-        job => job.ExecuteAsync(),
-        "1 */2 * * * *"); // Every 5 mins after sync 1 min (for testing)
-    recurringJobManager.AddOrUpdate<NotificationJob>(
-        "notification-email",
-        job => job.ExecuteAsync(),
-        "*/1 * * * *"); // Every 2 mins (for testing)
-    recurringJobManager.AddOrUpdate<SummaryJob>(
-        "summary-email",
-        job => job.ExecuteAsync(),
-        "2 */2 * * * *"); // Every 5 mins, offset 2 min with sync (for testing)
+        "*/5 * * * * *"); // Every 5 mins (for testing)
 }
 
 app.Run();

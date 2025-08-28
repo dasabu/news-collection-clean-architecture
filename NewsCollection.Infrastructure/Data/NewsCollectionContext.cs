@@ -83,9 +83,9 @@ public class NewsCollectionContext(DbContextOptions<NewsCollectionContext> optio
             .Property(a => a.FetchedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        // Cấu hình default SubscriptionFrequency
-        modelBuilder.Entity<User>()
-            .Property(u => u.SubscriptionFrequency)
+        // Configure default Frequency for UserSubscription
+        modelBuilder.Entity<UserSubscription>()
+            .Property(us => us.Frequency)
             .HasDefaultValue("daily");
     }
 }

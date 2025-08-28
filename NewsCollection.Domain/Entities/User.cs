@@ -12,7 +12,6 @@ public class User
 
     public required string Password { get; set; }
 
-    public string SubscriptionFrequency { get; set; } = "daily"; // "daily" or "weekly"
     public List<UserSubscription> Subscriptions { get; set; } = new();
     public List<Collection> Collections { get; set; } = new();
 }

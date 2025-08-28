@@ -29,10 +29,10 @@ public class SubscriptionController(ISubscriptionService service) : ControllerBa
     public async Task<ActionResult<List<SubscriptionDto>>> GetSubscriptions() =>
         Ok(await service.GetUserSubscriptionsAsync());
 
-    [HttpPut("frequency")]
-    public async Task<ActionResult> UpdateFrequency([FromBody] UpdateUserFrequencyDto request)
+    [HttpPost("batch")]
+    public async Task<ActionResult<List<SubscriptionDto>>> BatchSubscribe([FromBody] BatchSubscriptionDto request)
     {
-        var result = await service.UpdateUserFrequencyAsync(request);
-        return result ? Ok() : BadRequest("Invalid frequency");
+        var results = await service.BatchSubscribeAsync(request.Subscriptions);
+        return Ok(results);
     }
 }
