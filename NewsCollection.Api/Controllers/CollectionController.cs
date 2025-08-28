@@ -50,7 +50,7 @@ public class CollectionController(ICollectionService service) : ControllerBase
     public async Task<IActionResult> DeleteCollection(int id)
     {
         var success = await service.DeleteCollectionAsync(id);
-        return success ? NoContent() : BadRequest("Collection not found or contains articles");
+        return success ? NoContent() : BadRequest("Collection not found");
     }
 
     [HttpPost("{collectionId}/articles/{articleId}")]

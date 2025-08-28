@@ -75,9 +75,6 @@ public class CollectionService(ICollectionRepository repository, IHttpContextAcc
         if (collection == null || collection.UserId != GetUserId())
             return false;
 
-        if (await repository.HasArticlesAsync(id))
-            return false;
-
         await repository.DeleteCollectionAsync(id);
         return true;
     }

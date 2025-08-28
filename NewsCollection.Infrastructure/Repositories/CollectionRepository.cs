@@ -50,6 +50,16 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
 
     public async Task DeleteCollectionAsync(int id)
     {
+        var collectionArticles = await context.CollectionArticles
+            .IgnoreQueryFilters()
+            .Where(ca => ca.CollectionId == id)
+            .ToListAsync();
+
+        foreach (var ca in collectionArticles)
+        {
+            ca.IsDeleted = true;
+        }
+
         var collection = await context.Collections
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Id == id);
@@ -66,14 +76,34 @@ public class CollectionRepository(NewsCollectionContext context) : ICollectionRe
 
     public async Task AddArticleToCollectionAsync(int collectionId, int articleId)
     {
-        await context.CollectionArticles.AddAsync(
-            new CollectionArticle
-            {
-                CollectionId = collectionId,
-                ArticleId = articleId,
-                IsDeleted = false
-            }
-        );
+        // Check for an existing soft-deleted record
+        var existing = await context.CollectionArticles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(ca => ca.CollectionId == collectionId && ca.ArticleId == articleId);
+
+        if (existing != null)
+        {
+            if (!existing.IsDeleted)
+                return; // Article is already active in the collection
+
+            // Restore the soft-deleted record
+            existing.IsDeleted = false;
+            existing.CreatedAt = DateTime.UtcNow; // Update timestamp if needed
+        }
+        else
+        {
+            // Create a new record
+            await context.CollectionArticles.AddAsync(
+                new CollectionArticle
+                {
+                    CollectionId = collectionId,
+                    ArticleId = articleId,
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
+        }
+
         await context.SaveChangesAsync();
     }
 
