@@ -1,5 +1,7 @@
 # NewsCollection Application
 
+![User Interface](./images/ui.png)
+
 A modern news aggregation and collection application built with .NET 9.0 using Clean Architecture principles. This application allows users to browse, search, and organize news articles from various sources into personalized collections.
 
 ## Prerequisites
