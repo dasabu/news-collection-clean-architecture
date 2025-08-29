@@ -122,14 +122,16 @@ This project follows Clean Architecture principles with the following layers:
 
 - Email notification features are not implemented
 - Not deploy to production environment
-- Limited news sources integration
-- Basic search functionality without advanced filtering
+- Not format return API in case data validation failed
+- Not implement search functionality
+- Only support basic filtering (by date, category)
+- Limited news sources integration (depend on only NewsApi source)
 
 ### Planned Improvements
 
 - Implement email notifications for new articles matching user preferences
-- Add machine learning-based article recommendations
+- Format return API in case data validation failed
+- Implement search functionality and advanced filtering
+- Deploy website into production environment
 - Expand news sources and integration options
-- Implement advanced search with natural language processing
 - Add social sharing features
-- Develop mobile applications (iOS/Android)
