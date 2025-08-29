@@ -8,11 +8,11 @@ using NewsCollection.Application.Services;
 using NewsCollection.Infrastructure.Data;
 using NewsCollection.Infrastructure.Providers;
 using NewsCollection.Infrastructure.Repositories;
-using NewsCollection.Infrastructure.Jobs;
-using NewsCollection.Api.Filters;
 using Scalar.AspNetCore;
 using Hangfire;
 using Hangfire.PostgreSql;
+using NewsCollection.Api.Filters;
+using NewsCollection.Infrastructure.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -28,4 +28,3 @@ public class AuthController(IAuthService authService) : ControllerBase
         return token == null ? BadRequest("Invalid username or password") : Ok(token);
     }
 }
-

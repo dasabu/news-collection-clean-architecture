@@ -14,7 +14,6 @@ public class NewsCollectionContext(DbContextOptions<NewsCollectionContext> optio
     public DbSet<CollectionArticle> CollectionArticles => Set<CollectionArticle>();
 
     public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
-    public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,7 +51,6 @@ public class NewsCollectionContext(DbContextOptions<NewsCollectionContext> optio
         modelBuilder.Entity<CollectionArticle>()
             .HasQueryFilter(ca => !ca.IsDeleted);
 
-        // Cấu hình UserSubscription
         modelBuilder.Entity<UserSubscription>()
             .HasKey(us => new { us.UserId, us.CategoryId });
         modelBuilder.Entity<UserSubscription>()
@@ -67,23 +65,14 @@ public class NewsCollectionContext(DbContextOptions<NewsCollectionContext> optio
             .Property(us => us.IsActive)
             .HasDefaultValue(true);
 
-        // Cấu hình EmailLog
-        modelBuilder.Entity<EmailLog>()
-            .HasOne(el => el.User)
-            .WithMany() // Không cần navigation property ngược nếu không dùng
-            .HasForeignKey(el => el.UserId);
-
-        // Cấu hình default CreatedAt
         modelBuilder.Entity<CollectionArticle>()
             .Property(ca => ca.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        // Cấu hình default FetchedAt
         modelBuilder.Entity<Article>()
             .Property(a => a.FetchedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        // Configure default Frequency for UserSubscription
         modelBuilder.Entity<UserSubscription>()
             .Property(us => us.Frequency)
             .HasDefaultValue("daily");
